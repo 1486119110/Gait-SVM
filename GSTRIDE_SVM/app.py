@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import chi2_contingency, skew
+from sklearn.metrics import roc_curve
 from sklearn.model_selection import train_test_split, KFold, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
@@ -60,6 +61,17 @@ def assess(V_flag, V_flag_pred):
 
     assess_value = [acc, sens, F1]
     return (assess_value)
+
+def find_best_threshold(y_true, y_pred):
+
+    fpr, tpr, thresholds = roc_curve(y_true, y_pred)
+    gmeans = np.sqrt(tpr * (1 - fpr))
+    best_idx = np.argmax(gmeans)
+    best_threshold = thresholds[best_idx]
+    # print(f"最佳阈值: {best_threshold}")
+
+    return best_threshold
+
 
 def SVM_Search(V_IMU, V_flag):
     pipeline = Pipeline([
@@ -198,7 +210,10 @@ def SVM_SVR_TUG_GS_Compare(svm_model,svr_model,V_IMU, V_flag,V_TUG,V_GS):
 
         # SVR预测
         svr_model.fit(V_train, V_flag_train)
-        V_flag_SVR_pred = svr_model.predict(V_test)
+        V_SVR_pred = svr_model.predict(V_test)
+
+        threshold=find_best_threshold(V_flag_test,V_SVR_pred)
+        V_flag_SVR_pred = (V_SVR_pred >= threshold).astype(int)
 
         assess_SVR_value = assess(V_flag_test, V_flag_SVR_pred)
         acc_SVR_sum = acc_SVR_sum + assess_SVR_value[0]
@@ -218,7 +233,7 @@ def SVM_SVR_TUG_GS_Compare(svm_model,svr_model,V_IMU, V_flag,V_TUG,V_GS):
         # GS测试
         V_GS_pred = np.zeros(len(V_flag_test))
         for i in range(len(V_flag_test)):
-            if V_GS_test[i] < 1:
+            if V_GS_test[i] < 0.8:
                 V_GS_pred[i] = 1
         assess_GS_value = assess(V_flag_test, V_GS_pred)
         acc_GS_sum = acc_GS_sum + assess_GS_value[0]
