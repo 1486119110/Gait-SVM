@@ -9,12 +9,20 @@ files_number = len(files)
 meanAccX = np.zeros((files_number, 1))
 meanAccY = np.zeros((files_number, 1))
 meanAccZ = np.zeros((files_number, 1))
-meanAcc = np.zeros((files_number, 1))
+# meanAcc = np.zeros((files_number, 1))
 
 meanGyrX = np.zeros((files_number, 1))
 meanGyrY = np.zeros((files_number, 1))
 meanGyrZ = np.zeros((files_number, 1))
-meanGyr = np.zeros((files_number, 1))
+# meanGyr = np.zeros((files_number, 1))
+
+meanAccX_Part = np.zeros((files_number, 1))
+meanAccY_Part = np.zeros((files_number, 1))
+meanAccZ_Part = np.zeros((files_number, 1))
+
+meanGyrX_Part = np.zeros((files_number, 1))
+meanGyrY_Part = np.zeros((files_number, 1))
+meanGyrZ_Part = np.zeros((files_number, 1))
 
 # print(AccGyr["V001"][0][0])
 
@@ -33,7 +41,32 @@ for i, file_name in enumerate(files):
     meanGyrZ[i] = np.mean(data_AccGyr[:, 5])  # 第六列为 GyrZ
     # meanGyr[i] = np.sqrt(meanGyrX[i]**2 + meanGyrY[i]**2 + meanGyrZ[i]**2)  # 总陀螺仪均值
 
+    #计算用于训练的数据
+    if (134 <= i <= 139) or (154 <= i <= 157):
+        meanAccX_Part[i] = np.mean(data_AccGyr[0:1561, 0])  # 第一列为 AccX
+        meanAccY_Part[i] = np.mean(data_AccGyr[0:1561, 1])  # 第二列为 AccY
+        meanAccZ_Part[i] = np.mean(data_AccGyr[0:1561, 2])  # 第三列为 AccZ
+        # meanAcc[i] = np.sqrt(meanAccX[i]**2 + meanAccY[i]**2 + meanAccZ[i]**2)  # 总加速度均值
+
+        meanGyrX_Part[i] = np.mean(data_AccGyr[0:1561, 3])  # 第四列为 GyrX
+        meanGyrY_Part[i] = np.mean(data_AccGyr[0:1561, 4])  # 第五列为 GyrY
+        meanGyrZ_Part[i] = np.mean(data_AccGyr[0:1561, 5])  # 第六列为 GyrZ
+        # meanGyr[i] = np.sqrt(meanGyrX[i]**2 + meanGyrY[i]**2 + meanGyrZ[i]**2)  # 总陀螺仪均值
+
+    else:
+        meanAccX_Part[i] = np.mean(data_AccGyr[0:2371, 0])  # 第一列为 AccX
+        meanAccY_Part[i] = np.mean(data_AccGyr[0:2371, 1])  # 第二列为 AccY
+        meanAccZ_Part[i] = np.mean(data_AccGyr[0:2371, 2])  # 第三列为 AccZ
+        # meanAcc[i] = np.sqrt(meanAccX[i]**2 + meanAccY[i]**2 + meanAccZ[i]**2)  # 总加速度均值
+
+        meanGyrX_Part[i] = np.mean(data_AccGyr[0:2371, 3])  # 第四列为 GyrX
+        meanGyrY_Part[i] = np.mean(data_AccGyr[0:2371, 4])  # 第五列为 GyrY
+        meanGyrZ_Part[i] = np.mean(data_AccGyr[0:2371, 5])  # 第六列为 GyrZ
+        # meanGyr[i] = np.sqrt(meanGyrX[i]**2 + meanGyrY[i]**2 + meanGyrZ[i]**2)  # 总陀螺仪均值
+
+
 files_number_register = 158
+
 
 # 导入数据，数据存储在给定矩阵中   跌倒者标志位为0    跌倒者标志位为1
 V_IMU = np.zeros((files_number_register, 29))
@@ -41,6 +74,7 @@ V_flag = np.zeros(files_number_register)
 V_TUG = np.zeros((files_number_register, 1))
 V_GS = np.zeros((files_number_register, 1))
 input_data_regisier(V_IMU, V_flag, V_TUG, V_GS, files_number_register)
+
 
 # 步行距离--------------数据变差
 Distance = np.zeros((files_number_register, 1))
@@ -182,7 +216,8 @@ CVPathLength2D = np.zeros((files_number_register, 1))
 for i in range(files_number_register):
     CVPathLength2D[i][0] = V_IMU[i][26] / V_IMU[i][25] * 100
 
-Gait_Parameters = np.column_stack((Distance,                Strides,                meanStride_Velocity,
+Gait_Parameters = np.column_stack((#Distance,               Strides,
+                                   meanStride_Velocity,
                                    meanClearance,           meanLoading,            meanPushing,
                                    meanSwing,               meanFootFlat,           meanPitchHS,
                                    meanStride_Length,       meanStep_Speed,         meanCadence,
@@ -192,10 +227,12 @@ Gait_Parameters = np.column_stack((Distance,                Strides,            
                                    CVPitchHS,               CVStride_Length,        CVStep_Speed,
                                    CVCadence,               CVPitchToeOff,          CVPathLength3D,
                                    CVPathLength2D,
-                                   meanAccX,meanAccY,meanAccZ,meanGyrX,meanGyrY,meanGyrZ
+                                   meanAccX,                meanAccY,               meanAccZ,
+                                   meanGyrX,                meanGyrY,               meanGyrZ
                                    ))
 
-Gait_Parameters_name = [            "Distance",             "Strides",              "meanStride_Velocity",
+Gait_Parameters_name = [            #"Distance",            "Strides",
+                                    "meanStride_Velocity",
                                     "meanClearance",        "meanLoading",          "meanPushing",
                                     "meanSwing",            "meanFootFlat",         "meanPitchHS",
                                     "meanStride_Length",    "meanStep_Speed",       "meanCadence",
@@ -212,3 +249,4 @@ Gait_Parameters_test= np.column_stack(( meanStride_Velocity,     meanClearance, 
                                         meanLoading,             CVPitchHS,               CVSwing,
                                         CVStride_Velocity,       meanPushing,             CVPathLength3D,
                                         meanAccX,meanAccY,meanAccZ,meanGyrX,meanGyrY,meanGyrZ))
+
